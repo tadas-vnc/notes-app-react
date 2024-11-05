@@ -8,16 +8,19 @@ import { Sun, Moon } from 'lucide-react';
 
 const App = () => {
   const [isDarkTheme, setIsDarkTheme] = useState(localStorage.getItem("dark-theme") == null ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) : localStorage.getItem("dark-theme") == "true")
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState(localStorage.getItem("notes") != null ? JSON.parse(localStorage.getItem("notes")) : []);
   const [showModal, setShowModal] = useState(false);
   const [currentNote, setCurrentNote] = useState({ id: null, title: '', content: '' });
   const [isEditing, setIsEditing] = useState(false);
-
-  useEffect(()=>{
+  const [deletingNote, setDeletingNote] = useState(null);
+  useEffect(()=>{ 
     localStorage.setItem("dark-theme", isDarkTheme);
     document.body.setAttribute("data-bs-theme", isDarkTheme ? "dark" : "light")
   },[isDarkTheme])
 
+  useEffect(()=>{
+    localStorage.setItem("notes", JSON.stringify(notes))
+  },[notes])
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
   };
@@ -52,10 +55,8 @@ const App = () => {
     handleShow();
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      setNotes(notes.filter(note => note.id !== id));
-    }
+  const handleDelete = (props) => {
+    setDeletingNote(props)
   };
 
   return (
@@ -88,7 +89,21 @@ const App = () => {
           </Button>
         </Col>
       </Row>
-
+      <Modal show={deletingNote != null} onHide={(e)=>{setDeletingNote(null);}}>
+        <Modal.Header closeButton>
+          <Modal.Title>Are you sure you want to delete note "{deletingNote?.title || "Unknown"}" ?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>This action cannot be undone, are you sure you want to do this?</p>
+          <Button onClick={(e)=>{
+            setNotes(notes.filter(note => note.id !== deletingNote.id));
+            setDeletingNote(null)
+          }} variant='danger'>Yes, delete</Button>
+          <Button onClick={(e)=>{
+            setDeletingNote(null)
+          }} variant='primary'>No, cancel</Button>
+        </Modal.Body>
+        </Modal>
       <Row>
         {notes.length === 0 ? (
           <Col className="text-center">
@@ -100,7 +115,7 @@ const App = () => {
               <Card>
                 <Card.Body>
                   <Card.Title>{note.title}</Card.Title>
-                  <Card.Text>{note.content}</Card.Text>
+                  <Card.Text style={{whiteSpace:"break-spaces"}}>{note.content}</Card.Text>
                   <div className="d-flex justify-content-end">
                     <Button 
                       variant="outline-primary" 
@@ -111,7 +126,7 @@ const App = () => {
                     </Button>
                     <Button 
                       variant="outline-danger"
-                      onClick={() => handleDelete(note.id)}
+                      onClick={() => handleDelete(note)}
                     >
                       Delete
                     </Button>
@@ -123,7 +138,7 @@ const App = () => {
         )}
       </Row>
 
-      <Modal show={showModal} onHide={handleClose}>
+      <Modal show={showModal} onHide={handleClose} backdrop="static">
         <Modal.Header closeButton>
           <Modal.Title>{isEditing ? 'Edit Note' : 'Add New Note'}</Modal.Title>
         </Modal.Header>
