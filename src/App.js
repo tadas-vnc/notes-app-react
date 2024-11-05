@@ -1,15 +1,26 @@
 import logo from './logo.svg';
 import './App.css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import "../node_modules/bootstrap/dist/css/bootstrap.css";
 import { Container, Row, Col, Button, Card, Form, Modal } from 'react-bootstrap';
+import { Sun, Moon } from 'lucide-react';
 
 const App = () => {
+  const [isDarkTheme, setIsDarkTheme] = useState(localStorage.getItem("dark-theme") == null ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) : localStorage.getItem("dark-theme") == "true")
   const [notes, setNotes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [currentNote, setCurrentNote] = useState({ id: null, title: '', content: '' });
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(()=>{
+    localStorage.setItem("dark-theme", isDarkTheme);
+    document.body.setAttribute("data-bs-theme", isDarkTheme ? "dark" : "light")
+  },[isDarkTheme])
+
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+  };
 
   const handleClose = () => {
     setShowModal(false);
@@ -52,9 +63,21 @@ const App = () => {
       <Row className="mb-4">
         <Col>
           <h1 className="text-center">My Notes</h1>
+          <Button 
+            variant={isDarkTheme ? 'light' : 'dark'}
+            onClick={toggleTheme}
+            className="rounded-circle p-2"
+            style={{ width: '40px', height: '40px', float:"right" }}
+          >
+            {isDarkTheme ? (
+              <Sun size={20} />
+            ) : (
+              <Moon size={20} />
+            )}
+          </Button>
         </Col>
       </Row>
-
+      
       <Row className="mb-4">
         <Col className="text-center">
           <Button variant="primary" onClick={() => {
